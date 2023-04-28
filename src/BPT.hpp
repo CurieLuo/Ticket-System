@@ -428,7 +428,7 @@ public:
    * @param retrieve = false: ignore old data (for debugging)
    */
   explicit BPT(string filename, bool retrieve = true) {
-    filename = "../bin/BPT_" + filename; //!!
+    filename = "./bin/BPT_" + filename; //!!
     tree_filename = filename + "_tree.bin",
     node_filename = filename + "_node.bin",
     value_filename = filename + "_value.bin";
