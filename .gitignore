@@ -1,0 +1,14 @@
+*.exe
+*.bat
+*.cmd
+*.dat
+*.bin
+*.lnk
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+CMakeFiles/
+.vscode/
+bin/
+main
+src/CMakeLists.txt
