@@ -2,6 +2,7 @@
 #define _SJTU_BPLUSTREE_HPP_
 
 #include "vector.hpp"
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -428,6 +429,7 @@ public:
    * @param retrieve = false: ignore old data (for debugging)
    */
   explicit BPT(string filename, bool retrieve = true) {
+    std::filesystem::create_directory("./bin");
     filename = "./bin/BPT_" + filename; //!!
     tree_filename = filename + "_tree.bin",
     node_filename = filename + "_node.bin",
