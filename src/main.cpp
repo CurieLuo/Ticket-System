@@ -1,9 +1,4 @@
-#define RETRIEVE true //!! debug
-// #define DEBUG
-
-#include "CachedBPT.hpp"
-#include "TicketSystem.hpp"
-#include <cstdio>
+#define RETRIEVE true
 
 #ifdef DEBUG
 #include <cassert>
@@ -12,6 +7,10 @@
 #define SHOW(x) (x)
 #endif
 
+#include "CachedBPT.hpp"
+#include "TicketSystem.hpp"
+#include <cstdio>
+
 struct ArgMap {
   string a[26];
   string &operator[](char idx) { return a[idx - 'a']; }
@@ -19,10 +18,6 @@ struct ArgMap {
 };
 
 int main() {
-  long long t0 = time(0); // test running time
-
-  // freopen("1_my.out", "w", stdout); //!! debug
-
   ios::sync_with_stdio(0);
   TicketSystem sys;
 
@@ -89,12 +84,8 @@ int main() {
         sys.clean();
       } else if (op == "exit") {
         cout << "bye" << endl;
-        // cerr << "running time:" << time(0) - t0 << ' '
-        //      << clock() * 1000ULL / CLOCKS_PER_SEC
-        //      << endl; //!! test running time
         return 0;
-      } else
-        cout << '\n';
+      }
     } catch (const char *s) {
       cout << "-1\n";
     }

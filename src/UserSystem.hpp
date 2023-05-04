@@ -4,19 +4,9 @@
 #include "utility.hpp"
 #include <iostream>
 
-#ifdef _CHECK_HASHMAP_
-#include <map> //!!!!!!!!!! debug
-#endif
-
-using std::cerr;
-using std::cin;
-using std::cout;
-using std::endl;
-using std::make_pair;
-using std::ostream;
-using std::pair;
-using std::string;
-
+/**
+ * @brief records user information
+ */
 struct UserInfo {
   Pwd pwd;
   Name name;
@@ -32,14 +22,13 @@ public:
   }
 };
 
+/**
+ * @brief processes user related operations
+ */
 class UserSystem {
 protected:
   CachedBPT<ID, UserInfo> users; // key: userID
-#ifdef _CHECK_HASHMAP_
-  std::map<ID, int> logged_in; //!!!!!!!!!! debug
-#else
-  Hashmap<ID, int> logged_in; // value: privilege
-#endif
+  Hashmap<ID, int> logged_in;    // value: privilege
 
   virtual void clean() {
     users.clear();
@@ -62,7 +51,7 @@ public:
         throw "add_user() failed: operation unauthorized";
     }
     users.insert(uid, UserInfo(pwd, name, mail,
-                               pri)); //! try catch throw for further error user
+                               pri)); //! try catch throw for more error info
     cout << "0\n";
   }
 

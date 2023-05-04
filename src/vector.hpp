@@ -1,23 +1,37 @@
 #ifndef SJTU_VECTOR_HPP
 #define SJTU_VECTOR_HPP
 
-#ifdef _CHECK_VECTOR_
-#include <vector>
-#endif
+#include <cstddef>
+#include <cstring>
+#include <string>
 
-#include "exceptions.hpp"
+namespace sjtu {
+
+class exception {
+protected:
+  const std::string variant = "";
+  std::string detail = "";
+
+public:
+  exception() {}
+  exception(const exception &ec) : variant(ec.variant), detail(ec.detail) {}
+  virtual std::string what() { return variant + " " + detail; }
+};
+
+class index_out_of_bound : public exception {};
+
+class runtime_error : public exception {};
+
+class invalid_iterator : public exception {};
+
+class container_is_empty : public exception {};
+} // namespace sjtu
 
 namespace sjtu {
 /**
  * a data container like std::vector
  * store data in a successive memory and support random access.
  */
-
-#ifdef _CHECK_VECTOR_
-
-using std::vector;
-
-#else
 
 template <typename T> class vector {
 private:
@@ -441,7 +455,6 @@ public:
     alloc.destroy(arr + (--siz));
   }
 }; // class vector
-#endif
 
 } // namespace sjtu
 

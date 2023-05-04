@@ -14,25 +14,28 @@ using sjtu::vector;
 using std::make_pair;
 using std::make_tuple;
 using std::pair;
-using std::string;
-using std::swap;
 using std::tuple;
+
+using std::string;
 
 using std::cerr;
 using std::cin;
 using std::cout;
 using std::endl;
 using std::flush;
-using std::fstream;
 using std::ios;
 using std::istream;
 using std::ostream;
 
 using std::max;
 using std::min;
+using std::swap;
 
 using ID = size_t; // hash value
 
+/**
+ * @brief sorts vector a[l, l+1, ..., r] with comparator (function) cmp
+ */
 template <class T, class Cmp>
 void qsort(vector<T> &a, int l, int r, const Cmp &cmp) {
   if (l >= r) {

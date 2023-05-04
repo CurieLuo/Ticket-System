@@ -1,50 +1,25 @@
 #ifndef _SJTU_BPLUSTREE_HPP_
 #define _SJTU_BPLUSTREE_HPP_
 
-#include "vector.hpp"
+#include <filesystem>
 #include <fstream>
-#include <iostream>
-#include <string>
 
-#ifdef DEBUG
-#include <cassert>
-#define SHOW(x) (cerr << #x "=" << (x) << endl, (x))
-#else
-#define SHOW(x) (x)
-#endif
+#include "utility.hpp"
 
-using sjtu::vector;
-using std::cerr;
-using std::cin;
-using std::cout;
-using std::endl;
 using std::fstream;
-using std::ios;
-using std::make_pair;
-using std::pair;
-using std::string;
-using Ptr = char *;
 
 /**
- * @brief for debugging
- */
-template <class T1, class T2>
-std::ostream &operator<<(std::ostream &os, pair<T1, T2> x) {
-  return os << '(' << x.first << ',' << x.second << ')';
-}
-
-/**
- * @brief functions for reading from/writing into files (flow: continuous)
+ * @brief functions for reading from/writing into files (flow: continuous I/O)
  */
 template <class T> inline void read_flow_(fstream &fs, T &x) {
-  fs.read((Ptr)&x, sizeof(x));
+  fs.read((char *)&x, sizeof(x));
 }
 template <class T, class... Args>
 inline void read_flow_(fstream &fs, T &x, Args &...args) {
   read_flow_(fs, x), read_flow_(fs, args...);
 }
 template <class T> inline void write_flow_(fstream &fs, T &x) {
-  fs.write((Ptr)&x, sizeof(x));
+  fs.write((char *)&x, sizeof(x));
 }
 template <class T, class... Args>
 inline void write_flow_(fstream &fs, T &x, Args &...args) {
@@ -52,16 +27,16 @@ inline void write_flow_(fstream &fs, T &x, Args &...args) {
 }
 template <class T1> inline void read_(fstream &fs, T1 &x, int pos) {
   fs.seekg(pos);
-  fs.read((Ptr)&x, sizeof(x));
+  fs.read((char *)&x, sizeof(x));
 }
 template <class T1> inline void write_(fstream &fs, T1 &x, int pos) {
   fs.seekp(pos);
-  fs.write((Ptr)&x, sizeof(x));
+  fs.write((char *)&x, sizeof(x));
 }
 
 /**
  * @brief B+ tree
- * ! assumes Key and T have fixed size
+ * Key and T must have fixed size
  */
 template <class Key, class T> class BPT {
 
@@ -104,7 +79,7 @@ protected:
     operator int() const { return pos; }
 
     /**
-     * @brief find the index of key x in data[]
+     * @brief find the index of  the first key >= or > x in data[]
      */
     size_t lower_bound(const Key &x) const {
       int left = 0, right = size - 1, mid, ret = size;
@@ -153,11 +128,10 @@ protected:
 
   fstream tree_file, node_file, value_file;
   string tree_filename, node_filename, value_filename;
-  sjtu::vector<int> node_pool, value_pool;
-  // TODO: recycling (value)
+  sjtu::vector<int> node_pool,
+      value_pool; // pools for recycling external storage
   /**
    * @brief find a new position in the file
-   * ! must write before allocating another
    */
   virtual int new_node() {
     if (!node_pool.empty()) {
@@ -167,7 +141,8 @@ protected:
     }
     node_file.seekp(0, ios::end);
     int pos = node_file.tellp();
-    write_(node_file, null, pos);
+    write_(node_file, null,
+           pos); // make sure the new position is actually allocated
     return pos;
   }
   virtual int new_value() {
@@ -178,7 +153,6 @@ protected:
     }
     value_file.seekp(0, ios::end);
     int pos = value_file.tellp();
-    // write_(value_file, T(), pos); //! add this if cache is used
     return pos;
   }
   virtual void delete_node(int pos) { node_pool.push_back(pos); }
@@ -192,8 +166,6 @@ protected:
   virtual void write_value(T &x, int pos) { write_(value_file, x, pos); }
   virtual void read_value(const T &x, int pos) { read_(value_file, x, pos); }
   virtual void write_value(const T &x, int pos) { write_(value_file, x, pos); }
-  // #define Z assert(root.max_key());
-  //$ use this to find out which line first violated this property
 
 private:
   /**
@@ -206,10 +178,7 @@ private:
 
   /**
    * @brief splits an oversized node
-   *
-   * @param u the node to be split
-   * @param p parent of u
-   * @param idx_u index of u among children of p
+   * descriptions of parameters: see BP_insert()
    */
   void split(Node &u, Node &p, size_t idx_u) {
     Node v(new_node(), u.leaf);
@@ -218,7 +187,6 @@ private:
     if (u == end_pos)
       end_pos = v; // update end_pos
     // copy half of u to v
-    // Variation: std::copy(u.data + u.size, u.data + u.size + v.size, v.data);
     for (size_t i = 0; i < v.size; i++) {
       v[i] = u[i + u.size];
     }
@@ -238,8 +206,7 @@ private:
         read(nxt, v.next);
         nxt.prev = v;
         write(nxt);
-        //                write(v.pos, v.next + ((Ptr)&v.prev - (Ptr)&v));
-        //! write v.next.prev=v
+        // write v.next.prev=v
       }
       p[idx_u].first = u.max_key(); // update the indexing key for u
       p.insert(Data(v.max_key(), v), idx_u + 1);
@@ -248,9 +215,13 @@ private:
   /**
    * @brief inserts a node recursively, then adjusts by calling split()
    * makes sure every change is ultimately written into the disk
+   * @param key,val to be inserted
+   * @param u current node
+   * @param p parent node of u
+   * @param idx_u index of u in p.data[]
    */
   void BP_insert(const Key &key, int val, Node &u, Node &p, size_t idx_u = 0) {
-    size_t idx_s = u.lower_bound(key); // index of s (see below)
+    size_t idx_s = u.lower_bound(key); // index of s (son of u)
     if (idx_s < u.size && u[idx_s].first == key) {
       throw "Error in insert(): element already exists";
     }
@@ -275,13 +246,14 @@ private:
 
   /**
    * @brief makes sure neither u nor v is undersized
+   * @param v next (right) brother of u
+   * descriptions of other parameters: see BP_erase()
    */
   void merge(Node &u, Node &v, Node &p, size_t idx_u) {
     if (u.size <= szmin && v.size <= szmin) { // merge u and v
       if (v == end_pos)
         end_pos = u; // update end_pos
       // copy v to u
-      // Variation: std::copy(v.data, v.data + v.size, u.data + u.size);
       for (size_t i = 0; i < v.size; i++) {
         u[u.size + i] = v[i];
       }
@@ -292,7 +264,6 @@ private:
         read(nxt, u.next);
         nxt.prev = u;
         write(nxt);
-        // write(u.pos, u.next + ((Ptr)&u.prev - (Ptr)&u));
         // write u.next.prev=u
       }
       write(u), delete_node(v);
@@ -305,7 +276,6 @@ private:
       }
     } else { // lend a child if either u or v has size > szmin
       if (u.size > szmin) {
-        // Variation: v.insert(u[--u.size], 0);
         v.insert(u[u.size - 1], 0), u.erase(u.size - 1);
       } else /*if (v.size > szmin)*/ {
         u.insert(v[0], u.size), v.erase(0);
@@ -318,9 +288,13 @@ private:
   /**
    * @brief erases a node recursively, then adjusts by calling merge()
    * makes sure every change is ultimately written into the disk
+   * @param key to be erased
+   * @param u current node
+   * @param p parent node of u
+   * @param idx_u index of u in p.data[]
    */
   void BP_erase(const Key &key, Node &u, Node &p, size_t idx_u = 0) {
-    size_t idx_s = u.lower_bound(key);
+    size_t idx_s = u.lower_bound(key); // index of s (son of u)
     if (idx_s == u.size || (u.leaf && u[idx_s].first != key)) {
       throw "Error in erase(): element does not exist";
     }
@@ -384,33 +358,51 @@ public:
       tr->read_value(val, node[idx].second);
       return val;
     }
+    /**
+     * @brief set the value
+     */
     void set(const T &val) const { tr->write_value(val, node[idx].second); }
+    /**
+     * @brief returns a handle for quick access through set/get_by_handle
+     */
     int handle() const { return node[idx].second; }
     const Key &key() const { return node[idx].first; }
     value_type operator*() const { return {key(), value()}; }
+    /**
+     * @brief ++iter
+     */
     iterator &operator++() {
       move_next();
       return *this;
     }
+    /**
+     * @brief iter++
+     */
     const iterator operator++(int) {
       iterator ret = *this;
       move_next();
       return ret;
     }
+    /**
+     * @brief --iter
+     */
     iterator &operator--() {
       move_prev();
       return *this;
     }
+    /**
+     * @brief iter--
+     */
     const iterator operator--(int) {
       iterator ret = *this;
       move_prev();
       return ret;
     }
     bool operator==(const iterator &rhs) const {
-      // TODO: support insert/erase
       return tr == rhs.tr && node == rhs.node && idx == rhs.idx;
     }
     bool operator!=(const iterator &rhs) const { return !(*this == rhs); }
+    //! differs from STL
     operator bool() const { return node.pos != -1; }
   }; // class iterator
 
@@ -428,6 +420,7 @@ public:
    * @param retrieve = false: ignore old data (for debugging)
    */
   explicit BPT(string filename, bool retrieve = true) {
+    std::filesystem::create_directory("./bin");
     filename = "./bin/BPT_" + filename; //!!
     tree_filename = filename + "_tree.bin",
     node_filename = filename + "_node.bin",
@@ -500,6 +493,9 @@ public:
     }
     return ret.value();
   }
+  /**
+   * @return value of given key, default value if key not found
+   */
   T get_default(const Key &key) {
     auto ret = find(key);
     if (!ret)
@@ -582,35 +578,9 @@ public:
   /**
    * @brief erases a new element. throws error if element does not exist
    */
-  void erase(const Key &key) { // TODO:return/throw
-    BP_erase(key, root, null);
-  }
+  void erase(const Key &key) { BP_erase(key, root, null); }
 
   bool empty() const { return !root.size; }
-
-  void debug(const Node &u, int dep) {
-    if (u.leaf) {
-      cerr << "leaf size=" << u.size << ", dep=" << dep << ": ";
-      for (size_t i = 0; i < u.size; i++)
-        cerr << u[i].first << ' ';
-      cerr << endl;
-      return;
-    }
-    cerr << "branch size=" << u.size << ", dep=" << dep << ": ";
-    for (size_t i = 0; i < u.size; i++)
-      cerr << u[i].first << ' ';
-    cerr << endl;
-    for (size_t i = 0; i < u.size; i++) {
-      Node s;
-      read(s, u[i].second);
-      debug(s, dep + 1);
-    }
-  }
-  void debug(const string &msg = "") {
-    cerr << msg << endl;
-    debug(root, 0);
-    cerr << endl;
-  }
 }; // Class BPT
 
 #endif

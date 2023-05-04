@@ -6,11 +6,18 @@
 using std::string;
 
 inline int to_int(const string &s) { return atoi(s.data()); }
+/**
+ * @brief converts two-digit numbers to strings (for datetime.hpp)
+ */
 inline string to_string2(int x) {
   string ret;
   ret += x / 10 + '0', ret += x % 10 + '0';
   return ret;
 }
+
+/**
+ * @brief parses raw information
+ */
 class Scanner {
 private:
   string s;

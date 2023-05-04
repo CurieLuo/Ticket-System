@@ -8,7 +8,7 @@ using std::string;
 
 std::hash<string> hash_str_;
 /**
- * @brief unsafe string with maximum size MaxLen
+ * @brief unsafe string with fixed size and maximum length MaxLen
  */
 template <size_t MaxLen_> class String {
   static constexpr size_t MaxLen = MaxLen_;

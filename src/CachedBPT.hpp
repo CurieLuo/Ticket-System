@@ -4,28 +4,17 @@
 #include "BPT.hpp"
 #include "Hashmap.hpp"
 
-// #define _NO_CACHE_ //! switch on/off cache
-
-// #define _CHECK_HASHMAP_
-#ifdef _CHECK_HASHMAP_
-#include <map> //!!!!!!!!!! debug
-#endif
-
-#ifndef _NO_CACHE_
 /**
  * @brief B+ tree with LRU cache
  */
-template <class Key, class T> class CachedBPT : public BPT<Key, T> {
+template <class Key, class T, size_t MEM_CAP = 1 << 18>
+class CachedBPT : public BPT<Key, T> {
 private:
   using Node = typename CachedBPT<Key, T>::Node;
-  static constexpr size_t LRU_CAP = (1 << 18) / sizeof(Node);
+  static constexpr size_t LRU_CAP = MEM_CAP / sizeof(Node);
   // adjust LRU_CAP according to sizeof(node)
 
-#ifdef _CHECK_HASHMAP_
-  using Cache = std::map<int, Node>; //!!!!!!!!!! debug
-#else
   using Cache = Hashmap<int, Node, LRU_CAP>;
-#endif
   Cache cache;
 
   /**
@@ -71,21 +60,6 @@ protected:
     }
   }
   virtual void write(Node &x) override { CachedBPT<Key, T>::write(x, x.pos); }
-  // TODO caching the values and recycling
-  /*
-  virtual void read_value(T &x, int pos) override {
-    read_(BPT<Key, T>::value_file, x, pos);
-  }
-  virtual void write_value(T &x, int pos) override {
-    write_(BPT<Key, T>::value_file, x, pos);
-  }
-  virtual void read_value(const T &x, int pos) override {
-    read_(BPT<Key, T>::value_file, x, pos);
-  }
-  virtual void write_value(const T &x, int pos) override {
-    write_(BPT<Key, T>::value_file, x, pos);
-  }
-  */
 
 public:
   explicit CachedBPT(string filename, bool retrieve = true)
@@ -96,9 +70,5 @@ public:
     BPT<Key, T>::clear();
   }
 };
-
-#else
-#define CachedBPT BPT //!!!!!!!!!! debug
-#endif
 
 #endif
