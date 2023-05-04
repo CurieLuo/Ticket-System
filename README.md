@@ -12,7 +12,7 @@
 
 ## 文件树
 
-![file tree](file tree.jpg)
+![file tree](file_tree.jpg)
 
 ## 一、数据存储
 
