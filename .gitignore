@@ -11,4 +11,5 @@ CMakeFiles/
 testcases/
 .vscode/
 main
+code
 src/CMakeLists.txt
