@@ -3,7 +3,6 @@
 
 #include "CachedBPT.hpp"
 #include "utility.hpp"
-#include <iostream>
 
 constexpr int STA_NUM = 101;
 
@@ -95,60 +94,6 @@ struct Passby {
   Passby() {}
   Passby(const Train &tr, int hd, int i = 0) : train(tr), handle(hd), idx(i) {}
 };
-
-/**
- * @brief records ticket (passage) information
- */
-struct Ticket {
-  Train train;
-  Station from, to;
-  DateTime leave, arrive;
-  int time, price, seat; // total time/price/seats
-  Ticket() {}
-  Ticket(const Train &tr, const Station &ss, const Station &ts,
-         const DateTime &lv, const DateTime &arv, int tm, int p, int st)
-      : train(tr), from(ss), to(ts), leave(lv), arrive(arv), time(tm), price(p),
-        seat(st) {}
-  friend ostream &operator<<(ostream &os, const Ticket &p) {
-    return os << p.train << ' ' << p.from << ' ' << p.leave << " -> " << p.to
-              << ' ' << p.arrive << ' ' << p.price << ' ' << p.seat;
-  }
-};
-/**
- * @brief records transfer ticket information
- */
-struct Transfer {
-  Ticket ticket, ticket2;
-  int time = -1, cost = -1;
-  Transfer() {}
-  Transfer(const Ticket &tk, const Ticket &tk2) : ticket(tk), ticket2(tk2) {
-    time = tk2.arrive - tk.leave;
-    cost = tk.price + tk2.price;
-  }
-};
-/**
- * @brief comparators by time/cost
- */
-struct LessTime {
-  bool operator()(const Ticket &lhs, const Ticket &rhs) const {
-    return lhs.time < rhs.time ||
-           (lhs.time == rhs.time && lhs.train < rhs.train);
-  }
-  bool operator()(const Transfer &lhs, const Transfer &rhs) const {
-    return make_tuple(lhs.time, lhs.cost, lhs.ticket.train, lhs.ticket2.train) <
-           make_tuple(rhs.time, rhs.cost, rhs.ticket.train, rhs.ticket2.train);
-  }
-} less_time;
-struct LessCost {
-  bool operator()(const Ticket &lhs, const Ticket &rhs) const {
-    return lhs.price < rhs.price ||
-           (lhs.price == rhs.price && lhs.train < rhs.train);
-  }
-  bool operator()(const Transfer &lhs, const Transfer &rhs) const {
-    return make_tuple(lhs.cost, lhs.time, lhs.ticket.train, lhs.ticket2.train) <
-           make_tuple(rhs.cost, rhs.time, rhs.ticket.train, rhs.ticket2.train);
-  }
-} less_cost;
 
 /**
  * @brief processes train related operations

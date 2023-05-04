@@ -7,7 +7,6 @@
 #define SHOW(x) (x)
 #endif
 
-#include "CachedBPT.hpp"
 #include "TicketSystem.hpp"
 #include <cstdio>
 

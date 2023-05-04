@@ -1,8 +1,8 @@
 #ifndef __SJTU_USERSYSTEM_HPP__
 #define __SJTU_USERSYSTEM_HPP__
+
 #include "CachedBPT.hpp"
 #include "utility.hpp"
-#include <iostream>
 
 /**
  * @brief records user information
