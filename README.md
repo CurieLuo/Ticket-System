@@ -12,28 +12,7 @@
 
 ## 文件树
 
-.
-├── CMakeLists.txt
-├── database
-│   ├── BPT.hpp
-│   └── CachedBPT.hpp
-├── lib
-│   ├── datetime.hpp
-│   ├── Hashmap.hpp
-│   ├── Scanner.hpp
-│   ├── String.hpp
-│   ├── utility.hpp
-│   └── vector.hpp
-├── project requirements
-│   ├── bonus.md
-│   ├── management_system.md
-│   └── README.md
-├── README.md
-└── src
-    ├── main.cpp
-    ├── TicketSystem.hpp
-    ├── TrainSystem.hpp
-    └── UserSystem.hpp
+![file tree](file tree.jpg)
 
 ## 一、数据存储
 
